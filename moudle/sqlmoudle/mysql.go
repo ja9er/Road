@@ -37,12 +37,12 @@ type Userinfo struct {
 	Id       int64
 	Username string
 	Passwd   string
+	Status   string
 }
 
 func Queryuser(username string) Userinfo {
-
 	var user Userinfo
-	sqlStr := `select * from goadmin_user where username =?`
+	sqlStr := `select * from goadmin_user where username like ?`
 	stmt, err := DB.Prepare(sqlStr)
 	if err != nil {
 		log.Println("[-] Prepare Sql error:%v\n", err)
@@ -56,7 +56,7 @@ func Queryuser(username string) Userinfo {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		e := rows.Scan(&user.Id, &user.Username, &user.Passwd)
+		e := rows.Scan(&user.Id, &user.Username, &user.Passwd, &user.Status)
 		if e != nil {
 			fmt.Println(e)
 			color.RGBStyleFromString("168,215,186").Println("[-] read DataBase error")
