@@ -1,0 +1,14 @@
+{{template "base.html" .}}
+{{define "scripts"}}
+ (function () {
+        var amis = amisRequire("amis/embed");
+        // 用 amis 的 sdk 渲染内容区
+        amis.embed("#main", {
+          type: "page",
+          body: {
+          	type:'html',
+          	html:'<h1>欢迎来到后台管理系统：</h1>'
+          }
+        });
+      })();
+{{end}}

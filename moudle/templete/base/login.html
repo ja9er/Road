@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>登录</title>
+	<link rel="stylesheet" href="static/amis/sdk.css" />
+	<script src="static/amis/sdk.js"></script>
+	<!-- 在head标签中加入以下标签内容 -->
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<style type="text/css">
+		.login-div .a-Grid-col--lg2 {
+		    display: block;
+		    margin: 0 auto;
+		    width: 500px;
+		}
+	</style>
+</head>
+<body>
+	<div id="root"></div>
+</body>
+<script type="text/javascript">
+	(function () {
+        let amis = amisRequire('amis/embed');
+        // 通过替换下面这个配置来生成不同页面
+		let amisjson ={
+			type: 'page',
+			title: '',
+			body: [
+				{//登录页面 start
+					type:'container',
+					name:'page-login',
+					className: "login-div",
+					body:[
+
+						{
+							"type": "hbox",
+							"className": "m-t-xxl text-center",
+							"columns": [
+								{
+									"type": "icon",
+									"className": "text-4x m-b-xxl m-t-xxl",
+									"icon": "users"
+								},
+							]
+						},
+						{
+							"type": "html",
+							"html":"<h1><center>登录</center></h1>"
+						},
+						{
+							type:'grid',
+							columns:[
+								{
+									type: 'form',
+									title: '',
+									mode: 'horizontal',
+									redirect:'index',
+									lg:2,
+									lgOffset:5,
+									className:'',
+									api:{
+										"method": "post",
+										"url": "/login",
+										// "dataType": "form"
+									},
+									submitText:'login',
+									horizontal: {//设置位置
+										"left": 4,
+									},
+									resetAfterSubmit:true,
+									controls: [
+										{
+											size:'xs',
+											required:1,
+											label: 'username',
+											type: 'text',
+											validations:{
+												isAlphanumeric:1,
+												minLength:5,
+												maxLength:20,
+											},
+											name: 'admin'
+										},
+										{
+											size:'xs',
+											required:1,
+											label: 'passwd',
+											validations:{
+												minLength:5,
+											},
+											type: 'password',
+											name: 'pwd',
+
+										}
+									]
+								}
+
+							],
+						},
+					]
+				}//登录页面 end
+			]
+		}
+        let amisScoped = amis.embed('#root',amisjson
+        );
+
+      })();
+
+</script>
+</html>
