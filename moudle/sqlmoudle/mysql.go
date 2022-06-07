@@ -40,19 +40,20 @@ type Userinfo struct {
 	Status   string
 }
 
-func Queryuser(username string) Userinfo {
+func Queryuser(username string) []Userinfo {
+	var users []Userinfo
 	var user Userinfo
 	sqlStr := `select * from goadmin_user where username like ?`
 	stmt, err := DB.Prepare(sqlStr)
 	if err != nil {
 		log.Println("[-] Prepare Sql error:%v\n", err)
-		return Userinfo{}
+		return nil
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query(username)
 	if err != nil {
 		log.Println("[-] Query Sql error:%v\n", err)
-		return Userinfo{}
+		return nil
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -60,27 +61,27 @@ func Queryuser(username string) Userinfo {
 		if e != nil {
 			fmt.Println(e)
 			color.RGBStyleFromString("168,215,186").Println("[-] read DataBase error")
-			return Userinfo{}
+			return nil
 		}
-
+		users = append(users, user)
 	}
-	return user
+	return users
 }
 
 //查询taskid获取banner匹配结果
 func Queryifno() []Bannerresult {
 	var banner Bannerresult
 	var result []Bannerresult
-	sqlStr := `select * from bigtask`
+	sqlStr := `select * from  bigtask`
 	stmt, err := DB.Prepare(sqlStr)
 	if err != nil {
-		color.RGBStyleFromString("168,215,186").Println("[-] Prepare Sql error:%v\n", err)
+		log.Println("[-] Prepare Sql error:%v\n", err)
 		return nil
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query()
 	if err != nil {
-		color.RGBStyleFromString("168,215,186").Println("[-] Query Sql error:%v\n", err)
+		log.Println("[-] Query Sql error:%v\n", err)
 		return nil
 	}
 	defer rows.Close()
@@ -98,7 +99,6 @@ func Queryifno() []Bannerresult {
 
 //查询taskid获取banner匹配结果
 func UpdateTask(temp Bannerresult) {
-
 	sqlStr := `UPDATE  bigtask SET Target=?,  Banner=?,  Server=?, Status_Code=?,  Title=?, Pocmatch=? where ID= ?`
 	stmt, err := DB.Prepare(sqlStr)
 	if err != nil {
@@ -156,6 +156,34 @@ func Insertbanner(result Bannerresult) bool {
 	//将事务提交
 	tx.Commit()
 	return true
+}
+
+//查询taskid获取banner匹配结果
+func QueryPOC(target int) []Bannerresult {
+	var banner Bannerresult
+	var result []Bannerresult
+	sqlStr := `select * from bigtask where Pocmatch = ?`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare Sql error:%v\n", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(target)
+	if err != nil {
+		log.Println("[-] Query Sql error:%v\n", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&banner.Id, &banner.Task_Id, &banner.Target, &banner.Banner, &banner.Server, &banner.Status_Code, &banner.Title, &banner.Last_time, &banner.Pocmatch)
+		if e != nil {
+			log.Println("[-] read DataBase error: ", e)
+			return nil
+		}
+		result = append(result, banner)
+	}
+	return result
 }
 
 //查询taskid获取banner匹配结果

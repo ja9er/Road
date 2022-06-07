@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -70,22 +71,43 @@ func CheckAuth(c *gin.Context) {
 }
 func commentHandler(c *gin.Context) {
 	username := c.PostForm("username")
+
 	passwd := c.PostForm("password")
 	userres := sqlmoudle.Queryuser(username)
-	if userres.Passwd == passwd {
+	if userres[0].Passwd == passwd {
 		formatTimeStr := time.Now().Format("2006-01-02 15-04-05")
 		fmt.Println(formatTimeStr)
 		c.SetCookie("HMACCOUNT", rsaencryt(username+":"+formatTimeStr), 0, "", "", false, true)
 		c.SetCookie("name", username, 0, "", "", false, true)
 		c.Redirect(http.StatusFound, "/index")
 	} else {
-		c.HTML(http.StatusOK, "test.html", nil)
+		c.Request.URL.Path = "/"
+		content, err := ioutil.ReadFile("moudle/static/mq-admin/pages/login/login.html")
+		if err != nil {
+			c.Writer.WriteHeader(404)
+			c.Writer.WriteString("Not Found")
+			return
+		}
+		c.Writer.WriteHeader(200)
+		c.Writer.Header().Add("Accept", "text/html")
+		c.Writer.Write(content)
+		c.Writer.Flush()
 	}
 
 }
 
-func forwardHandler(c *gin.Context) {
-	c.HTML(http.StatusOK, "test.html", nil)
+func forwardHandler(resp *gin.Context) {
+	resp.Request.URL.Path = "/"
+	content, err := ioutil.ReadFile("moudle/static/mq-admin/pages/login/login.html")
+	if err != nil {
+		resp.Writer.WriteHeader(404)
+		resp.Writer.WriteString("Not Found")
+		return
+	}
+	resp.Writer.WriteHeader(200)
+	resp.Writer.Header().Add("Accept", "text/html")
+	resp.Writer.Write(content)
+	resp.Writer.Flush()
 }
 
 func Loadlogin(e *gin.Engine) {
