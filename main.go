@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Road/moudle/searchinfo/config"
 	"Road/moudle/sqlmoudle"
 	"Road/moudle/view"
 	"github.com/gin-gonic/gin"
@@ -9,12 +10,13 @@ import (
 
 func main() {
 	sqlmoudle.InitDB()
+	config.API_init()
 	r := gin.Default()
 	//r.Static("static", "moudle/static")
 	//r.LoadHTMLGlob("moudle/templete/**/*")
 	//r.StaticFS("/static", http.Dir("moudle/static/mq-admin"))
-	r.Static("/static", "moudle/static/mq-admin")
 	//r.LoadHTMLGlob("moudle/templete/**/*")
+	r.Static("/static", "moudle/static/mq-admin")
 	r.NoRoute(func(resp *gin.Context) {
 		// 实现内部重定向
 		resp.Request.URL.Path = "/"
@@ -32,5 +34,7 @@ func main() {
 	v1 := r.Group("/")
 	view.Loadlogin(r)
 	view.Loadidnex(r, v1)
+	view.Loadtask(r, v1)
+	view.Loadconnect(r, v1)
 	r.Run(":80")
 }

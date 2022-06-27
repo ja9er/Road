@@ -11,12 +11,20 @@ import (
 
 //数据库配置
 const (
-	userName = "root"
-	password = "root"
-	ip       = "127.0.0.1"
-	port     = "3306"
-	dbName   = "road"
+	UserName = "root"
+	Password = "root"
+	Ip       = "10.10.10.166"
+	Port     = "3306"
+	DbName   = "road"
 )
+
+//const (
+//	UserName = "root"
+//	Password = "Docker@mysql123"
+//	Ip       = "139.155.75.156"
+//	Port     = "3306"
+//	DbName   = "banner"
+//)
 
 //Db数据库连接池
 var DB *sql.DB
@@ -38,6 +46,46 @@ type Userinfo struct {
 	Username string
 	Passwd   string
 	Status   string
+}
+
+type Linkinfo struct {
+	Uuid        string
+	Ip_addr     string
+	Update_time sql.NullTime
+	Banner      string
+	Success     int
+	Fail        int
+}
+type Linktask struct {
+	Task_Id       string
+	UUID          string
+	Update_time   sql.NullTime
+	Update_Order  string
+	Update_Result string
+	Update_Status int
+}
+type Taskjob struct {
+	Id        int64
+	Task_Id   string
+	Fofaquery string
+	Progress  int64
+}
+
+func InitDB() {
+	//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
+	path := strings.Join([]string{UserName, ":", Password, "@tcp(", Ip, ":", Port, ")/", DbName, "?charset=utf8&parseTime=true"}, "")
+	//打开数据库,前者是驱动名，所以要导入： _ "github.com/go-sql-driver/mysql"
+	DB, _ = sql.Open("mysql", path)
+	//设置数据库最大连接数
+	DB.SetConnMaxLifetime(100)
+	//设置上数据库最大闲置连接数
+	DB.SetMaxIdleConns(10)
+	//验证连接
+	if err := DB.Ping(); err != nil {
+		color.RGBStyleFromString("168,215,186").Println("[-] MySql open database fail")
+		return
+	}
+	color.RGBStyleFromString("168,215,186").Println("[+] MySql connnect success")
 }
 
 func Queryuser(username string) []Userinfo {
@@ -68,7 +116,33 @@ func Queryuser(username string) []Userinfo {
 	return users
 }
 
-//查询taskid获取banner匹配结果
+func QueryPOCmatch(target int) []Bannerresult {
+	var banner Bannerresult
+	var result []Bannerresult
+	sqlStr := `select * from bigtask where Pocmatch = ?`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare Sql error:%v\n", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(target)
+	if err != nil {
+		log.Println("[-] Query Sql error:%v\n", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&banner.Id, &banner.Task_Id, &banner.Target, &banner.Banner, &banner.Server, &banner.Status_Code, &banner.Title, &banner.Last_time, &banner.Pocmatch)
+		if e != nil {
+			log.Println("[-] read DataBase error: ", e)
+			return nil
+		}
+		result = append(result, banner)
+	}
+	return result
+}
+
 func Queryifno() []Bannerresult {
 	var banner Bannerresult
 	var result []Bannerresult
@@ -97,6 +171,259 @@ func Queryifno() []Bannerresult {
 	return result
 }
 
+func Queryconnectinfo() []Linkinfo {
+	var link Linkinfo
+	var result []Linkinfo
+	sqlStr := `select * from  connect_equipment`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare Sql error:%v\n", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	if err != nil {
+		log.Println("[-] Query Sql error:%v\n", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&link.Uuid, &link.Ip_addr, &link.Update_time, &link.Banner, &link.Success, &link.Fail)
+		if e != nil {
+			fmt.Println(e)
+			color.RGBStyleFromString("168,215,186").Println("[-] read DataBase error")
+			return nil
+		}
+		result = append(result, link)
+	}
+	return result
+}
+
+func Queryconnecttaskinfo(uuid string) []Linktask {
+	var link Linktask
+	var result []Linktask
+	sqlStr := `select * from  equipment_task_info where uuid=? order by UPDATE_TIME  DESC`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Printf("[-] Prepare Sql error:%v\n", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(uuid)
+	if err != nil {
+		log.Printf("[-] Query Sql error:%v\n", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&link.Task_Id, &link.UUID, &link.Update_time, &link.Update_Order, &link.Update_Result, &link.Update_Status)
+		if e != nil {
+			fmt.Println(e)
+			color.RGBStyleFromString("168,215,186").Println("[-] read DataBase error")
+			return nil
+		}
+		result = append(result, link)
+	}
+	return result
+}
+func Insertconnecttask(result Linktask) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("INSERT INTO equipment_task_info (`Task_Id`, `UUID`,`UPDATE_ORDER`,`UPDATE_RESULT`,`UPDATE_status`) VALUES (?,?,?,?,?)")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Task_Id, &result.UUID, &result.Update_Order, &result.Update_Result, &result.Update_Status)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+func Deleteconnecttask(result Linktask) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("delete from equipment_task_info where Task_Id =?")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Task_Id)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+
+//scan task
+func Querytaskinfo() []Taskjob {
+	var task Taskjob
+	var result []Taskjob
+	sqlStr := `select * from  taskmanager`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare Sql error: ", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	if err != nil {
+		log.Println("[-] Query Sql error: ", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&task.Id, &task.Task_Id, &task.Progress, &task.Fofaquery)
+		if e != nil {
+			log.Println("[-] read DataBase error: ", e)
+			return nil
+		}
+		result = append(result, task)
+	}
+	return result
+}
+func Inserttask(result Taskjob) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("INSERT INTO taskmanager (`Task_Id`,`Fofaquery`, `Progress`) VALUES (?,?,?)")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Task_Id, &result.Fofaquery, &result.Progress)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+func Upadtetask(result Taskjob) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("UPDATE taskmanager set  `Progress` =? where Task_id=?")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Progress, &result.Task_Id)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+func Deletetask(result Taskjob) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("delete from taskmanager where Id =?")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Id)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+
+func Deletebannerfromtask(Taskid string) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("delete from task where task_id =?")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(Taskid)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+func Insertbanner(result Bannerresult) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("INSERT INTO task (`Task_Id`, `Target`,`Banner`,`Server`,`Status_Code`,`Title`) VALUES (?,?,?,?,?,?)")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Task_Id, &result.Target, &result.Banner, &result.Server, &result.Status_Code, &result.Title)
+	if err != nil {
+		fmt.Println(err)
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
+}
+
 //查询taskid获取banner匹配结果
 func UpdateTask(temp Bannerresult) {
 	sqlStr := `UPDATE  bigtask SET Target=?,  Banner=?,  Server=?, Status_Code=?,  Title=?, Pocmatch=? where ID= ?`
@@ -113,77 +440,6 @@ func UpdateTask(temp Bannerresult) {
 	}
 	defer rows.Close()
 
-}
-
-func InitDB() {
-	//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
-	path := strings.Join([]string{userName, ":", password, "@tcp(", ip, ":", port, ")/", dbName, "?charset=utf8&parseTime=true"}, "")
-	//打开数据库,前者是驱动名，所以要导入： _ "github.com/go-sql-driver/mysql"
-	DB, _ = sql.Open("mysql", path)
-	//设置数据库最大连接数
-	DB.SetConnMaxLifetime(100)
-	//设置上数据库最大闲置连接数
-	DB.SetMaxIdleConns(10)
-	//验证连接
-	if err := DB.Ping(); err != nil {
-		color.RGBStyleFromString("168,215,186").Println("[-] MySql open database fail")
-		return
-	}
-	color.RGBStyleFromString("168,215,186").Println("[+] MySql connnect success")
-}
-
-func Insertbanner(result Bannerresult) bool {
-	//开启事务
-	tx, err := DB.Begin()
-	if err != nil {
-		color.RGBStyleFromString("168,215,186").Println("[-] Insertbanner begin Tx fail")
-		return false
-	}
-	//准备sql语句
-	stmt, err := tx.Prepare("INSERT INTO task (`Task_Id`, `Target`,`Banner`,`Server`,`Status_Code`,`Title`) VALUES (?,?,?,?,?,?)")
-	if err != nil {
-		fmt.Println("[-] MySql Prepare fail")
-		fmt.Println(err)
-		return false
-	}
-	//将参数传递到sql语句中并且执行
-	_, err = stmt.Exec(&result.Task_Id, &result.Target, &result.Banner, &result.Server, &result.Status_Code, &result.Title)
-	if err != nil {
-		fmt.Println(err)
-		color.RGBStyleFromString("168,215,186").Println("[-] MySql Exec fail", err)
-		return false
-	}
-	//将事务提交
-	tx.Commit()
-	return true
-}
-
-//查询taskid获取banner匹配结果
-func QueryPOC(target int) []Bannerresult {
-	var banner Bannerresult
-	var result []Bannerresult
-	sqlStr := `select * from bigtask where Pocmatch = ?`
-	stmt, err := DB.Prepare(sqlStr)
-	if err != nil {
-		log.Println("[-] Prepare Sql error:%v\n", err)
-		return nil
-	}
-	defer stmt.Close()
-	rows, err := stmt.Query(target)
-	if err != nil {
-		log.Println("[-] Query Sql error:%v\n", err)
-		return nil
-	}
-	defer rows.Close()
-	for rows.Next() {
-		e := rows.Scan(&banner.Id, &banner.Task_Id, &banner.Target, &banner.Banner, &banner.Server, &banner.Status_Code, &banner.Title, &banner.Last_time, &banner.Pocmatch)
-		if e != nil {
-			log.Println("[-] read DataBase error: ", e)
-			return nil
-		}
-		result = append(result, banner)
-	}
-	return result
 }
 
 //查询taskid获取banner匹配结果
