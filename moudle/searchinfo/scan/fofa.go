@@ -102,7 +102,7 @@ func FofaGet(Task_id string, qs string) {
 	tempbanner.Banner.String = "0"
 	tempbanner.Title.String = "0"
 	//FofaRq(qs, FofaEmail, FofaToken, Url) // bug: 只請求了一次。可能shodan模塊也是這樣
-	res := Fafaall(qs)
+	res := Fafaall(qs + "&&(protocol=\"http\"||protocol=\"https\")")
 	for _, targets := range res {
 		if len(targets) > 0 {
 			tempbanner.Target = targets

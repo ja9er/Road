@@ -1,6 +1,7 @@
 package view
 
 import (
+	"Road/moudle/common"
 	"Road/moudle/searchinfo/scan"
 	"Road/moudle/sqlmoudle"
 	"encoding/json"
@@ -31,15 +32,15 @@ func Handle(ctx *gin.Context) {
 		data2 := sqlmoudle.Querytaskinfo()
 		buf, _ := json.Marshal(data2)
 		wsConn.WriteMessage(websocket.TextMessage, buf)
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
 func gettaskinfo(resp *gin.Context) {
 	res := sqlmoudle.Querytaskinfo()
-
 	resp.JSON(http.StatusOK, res)
 }
+
 func setsearchtask(resp *gin.Context) {
 	var json Querysearch
 	resp.BindJSON(&json)
@@ -55,6 +56,11 @@ func setsearchtask(resp *gin.Context) {
 		sqlmoudle.Upadtetask(sqlmoudle.Taskjob{
 			Task_Id:  Task_Id,
 			Progress: 2,
+		})
+		common.Getfinger(Task_Id)
+		sqlmoudle.Upadtetask(sqlmoudle.Taskjob{
+			Task_Id:  Task_Id,
+			Progress: 4,
 		})
 	}()
 	resp.JSONP(http.StatusOK, true)

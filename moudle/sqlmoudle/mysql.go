@@ -142,7 +142,33 @@ func QueryPOCmatch(target int) []Bannerresult {
 	}
 	return result
 }
-
+func Queryinfo(sqlStr string) []Bannerresult {
+	var banner Bannerresult
+	var result []Bannerresult
+	//sqlStr := `SELECT * FROM bigtask WHERE   Title = "UniFi Video"`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		color.RGBStyleFromString("168,215,186").Println("[-] Prepare Sql error:%v\n", err)
+		return nil
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	if err != nil {
+		color.RGBStyleFromString("168,215,186").Println("[-] Query Sql error:\n", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := rows.Scan(&banner.Id, &banner.Task_Id, &banner.Target, &banner.Banner, &banner.Server, &banner.Status_Code, &banner.Title, &banner.Last_time, &banner.Pocmatch)
+		if e != nil {
+			fmt.Println(e)
+			color.RGBStyleFromString("168,215,186").Println("[-] read DataBase error")
+			return nil
+		}
+		result = append(result, banner)
+	}
+	return result
+}
 func Queryifno() []Bannerresult {
 	var banner Bannerresult
 	var result []Bannerresult
@@ -407,13 +433,13 @@ func Insertbanner(result Bannerresult) bool {
 		return false
 	}
 	//准备sql语句
-	stmt, err := tx.Prepare("INSERT INTO task (`Task_Id`, `Target`,`Banner`,`Server`,`Status_Code`,`Title`) VALUES (?,?,?,?,?,?)")
+	stmt, err := tx.Prepare("INSERT INTO task (`Task_Id`, `Target`,`Banner`,`Server`,`Status_Code`,`Title`,`POcmatch`) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		log.Println("[-] MySql Prepare fail: ", err)
 		return false
 	}
 	//将参数传递到sql语句中并且执行
-	_, err = stmt.Exec(&result.Task_Id, &result.Target, &result.Banner, &result.Server, &result.Status_Code, &result.Title)
+	_, err = stmt.Exec(&result.Task_Id, &result.Target, &result.Banner, &result.Server, &result.Status_Code, &result.Title, &result.Pocmatch)
 	if err != nil {
 		fmt.Println(err)
 		log.Println("[-] MySql Exec fail", err)
@@ -424,9 +450,25 @@ func Insertbanner(result Bannerresult) bool {
 	return true
 }
 
+func DeleteTask(ID int64) {
+	sqlStr := `DELETE FROM  task where ID= ?`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare DELETE Sql error: ", err)
+		return
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(ID)
+	if err != nil {
+		log.Println("[-] Query DELETE Sql error:\n", err)
+		return
+	}
+	defer rows.Close()
+}
+
 //查询taskid获取banner匹配结果
 func UpdateTask(temp Bannerresult) {
-	sqlStr := `UPDATE  bigtask SET Target=?,  Banner=?,  Server=?, Status_Code=?,  Title=?, Pocmatch=? where ID= ?`
+	sqlStr := `UPDATE  task SET Target=?,  Banner=?,  Server=?, Status_Code=?,  Title=?, Pocmatch=? where ID= ?`
 	stmt, err := DB.Prepare(sqlStr)
 	if err != nil {
 		color.RGBStyleFromString("168,215,186").Println("[-] Prepare Sql error:\n", err)

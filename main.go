@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Road/moudle/common"
 	"Road/moudle/searchinfo/config"
 	"Road/moudle/sqlmoudle"
 	"Road/moudle/view"
@@ -12,6 +13,8 @@ func main() {
 	sqlmoudle.InitDB()
 	config.API_init()
 	r := gin.Default()
+	common.TaskInit("../data/plugin/")
+	common.Readconfig()
 	//r.Static("static", "moudle/static")
 	//r.LoadHTMLGlob("moudle/templete/**/*")
 	//r.StaticFS("/static", http.Dir("moudle/static/mq-admin"))

@@ -1,0 +1,6 @@
+{
+	"Fingerpath": "moudle/file/finger.json",
+	"Httpproxy":"",
+	"Sqlstr": "SELECT * FROM `task` WHERE ((DATEDIFF(NOW(),Last_time) > 2 and Pocmatch=\"1\") or Banner=\"0\" OR Title =\"0\") AND (Banner != \"Honeypot\" or Title != \"Honeypot\") ",
+	"Fileloader": ""
+}
