@@ -301,6 +301,34 @@ func Deleteconnecttask(result Linktask) bool {
 	return true
 }
 
+func Queryconnnectcount() []int64 {
+	var connectnumber []int64
+	var tempnumber int64
+	sqlStr := `SELECT COUNT(*)  FROM connect_equipment WHERE  datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 6 DAY ))=0 union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 5 DAY ))=0 union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 4 DAY ))=0 union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 3 DAY ))=0 union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 2 DAY ))=0 union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,date_sub( curdate( ), INTERVAL 1  DAY ))=0  union all SELECT COUNT(*)  FROM connect_equipment WHERE datediff(UPDATE_TIME,CURRENT_DATE())=0`
+	stmt, err := DB.Prepare(sqlStr)
+	if err != nil {
+		log.Println("[-] Prepare Sql error: ", err)
+		return connectnumber
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	if err != nil {
+		log.Println("[-] Query Sql error: ", err)
+		return connectnumber
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		e := rows.Scan(&tempnumber)
+		if e != nil {
+			log.Println("[-] read DataBase error: ", e)
+			return connectnumber
+		}
+		connectnumber = append(connectnumber, tempnumber)
+	}
+	return connectnumber
+}
+
 //scan task
 func Querytaskinfo() []Taskjob {
 	var task Taskjob

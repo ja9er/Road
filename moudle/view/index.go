@@ -2,10 +2,13 @@ package view
 
 import (
 	"Road/moudle/sqlmoudle"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func getindex(resp *gin.Context) {
@@ -91,9 +94,33 @@ func gettaskmanager(resp *gin.Context) {
 	resp.Writer.Flush()
 }
 
+func getconnectcount(resp *gin.Context) {
+	flag := resp.DefaultQuery("type", "")
+	if flag == "get" {
+		data2 := sqlmoudle.Queryconnnectcount()
+
+		resp.Writer.WriteHeader(200)
+		resp.Writer.Header().Add("Accept", "text/html")
+		buf, _ := json.Marshal(data2)
+		resp.Writer.Write(buf)
+		resp.Writer.Flush()
+		return
+	}
+	wsConn2, _ := Upgrader.Upgrade(resp.Writer, resp.Request, nil)
+	for {
+		data2 := sqlmoudle.Queryconnnectcount()
+		buf, _ := json.Marshal(data2)
+		wsConn2.WriteMessage(websocket.TextMessage, buf)
+		time.Sleep(10 * time.Second)
+	}
+}
+
 func Loadidnex(e *gin.Engine, v1 *gin.RouterGroup) {
 	v1.GET("../account/logout", logout)
 	v1.Any("/index", getindex)
+	v1.Any("/index/console/websocket", getconnectcount)
+	v1.GET("/index/console/info", getconnectcount)
+
 	v1.GET("/admin/user", getuser)
 	v1.GET("/admin/user/userinfo", getuserinfo)
 	v1.GET("/admin/data", getdata)
