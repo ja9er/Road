@@ -69,6 +69,7 @@ func Regist(target string, plugin Attackplugin) {
 }
 
 func Attackmatch(target string, banner string) bool {
+
 	flag := false
 	for name, list := range Attackplugins {
 		if strings.Contains(name, banner) {
@@ -119,10 +120,6 @@ func Request(target string, client *http.Client, banner sqlmoudle.Bannerresult, 
 	}
 	defer resp.Body.Close()
 	out := finger.Checkbanner(target, resp, Finpx, banner)
-	sqlmoudle.Upadtetask(sqlmoudle.Taskjob{
-		Task_Id:  banner.Task_Id,
-		Progress: 2,
-	})
 	tempbanner := sqlmoudle.Bannerresult{Id: banner.Id, Task_Id: banner.Task_Id, Target: target, Banner: sql.NullString{"NULL", true}, Server: sql.NullString{out.Server, true}, Status_Code: sql.NullString{strconv.Itoa(out.Statuscode), true}, Title: sql.NullString{out.Title, true}, Pocmatch: sql.NullInt16{
 		Int16: 0,
 		Valid: true,

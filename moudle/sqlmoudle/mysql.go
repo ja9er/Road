@@ -64,6 +64,7 @@ type Linktask struct {
 	Update_Result string
 	Update_Status int
 }
+
 type Taskjob struct {
 	Id        int64
 	Task_Id   string
@@ -223,6 +224,29 @@ func Queryconnectinfo() []Linkinfo {
 		result = append(result, link)
 	}
 	return result
+}
+func DeleteconnectEquipment(result Linkinfo) bool {
+	//开启事务
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("[-] Insertbanner begin Tx fail", err)
+		return false
+	}
+	//准备sql语句
+	stmt, err := tx.Prepare("delete from connect_equipment where UUID =?")
+	if err != nil {
+		log.Println("[-] MySql Prepare fail: ", err)
+		return false
+	}
+	//将参数传递到sql语句中并且执行
+	_, err = stmt.Exec(&result.Uuid)
+	if err != nil {
+		log.Println("[-] MySql Exec fail", err)
+		return false
+	}
+	//将事务提交
+	tx.Commit()
+	return true
 }
 
 func Queryconnecttaskinfo(uuid string) []Linktask {

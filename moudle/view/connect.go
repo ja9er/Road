@@ -59,10 +59,19 @@ func deleteequipmenttask(resp *gin.Context) {
 	resp.JSONP(http.StatusOK, flag)
 }
 
+func deleteequipment(resp *gin.Context) {
+	var json sqlmoudle.Linkinfo
+	resp.BindJSON(&json)
+	//Task_Id := strconv.FormatInt(time.Now().Unix(), 12)
+	flag := sqlmoudle.DeleteconnectEquipment(json)
+	resp.JSONP(http.StatusOK, flag)
+}
+
 func Loadconnect(e *gin.Engine, v1 *gin.RouterGroup) {
 	v1.GET("/admin/connect", getconnect)
 	v1.GET("/admin/connect/info", getconnectinfo)
 	v1.GET("/admin/connect/task/info", getconnect_taskinfo)
 	v1.POST("/admin/connect/task/init", insertequipmenttask)
 	v1.POST("/admin/connect/task/delete", deleteequipmenttask)
+	v1.POST("/admin/connect/equipment/delete", deleteequipment)
 }
