@@ -14,10 +14,6 @@ func main() {
 	r := gin.Default()
 	common.TaskInit("../data/plugin/")
 	common.Readconfig()
-	//r.Static("static", "moudle/static")
-	//r.LoadHTMLGlob("moudle/templete/**/*")
-	//r.StaticFS("/static", http.Dir("moudle/static/mq-admin"))
-	//r.LoadHTMLGlob("moudle/templete/**/*")
 	r.Static("/static", "moudle/static/mq-admin")
 	//r.NoRoute(func(resp *gin.Context) {
 	//	// 实现内部重定向

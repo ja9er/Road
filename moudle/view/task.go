@@ -32,7 +32,7 @@ func Handle(ctx *gin.Context) {
 		data2 := sqlmoudle.Querytaskinfo()
 		buf, _ := json.Marshal(data2)
 		wsConn.WriteMessage(websocket.TextMessage, buf)
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 
@@ -58,6 +58,7 @@ func setsearchtask(resp *gin.Context) {
 			Progress: 2,
 		})
 		common.Getfinger(Task_Id)
+		time.Sleep(20 * time.Second)
 		sqlmoudle.Upadtetask(sqlmoudle.Taskjob{
 			Task_Id:  Task_Id,
 			Progress: 4,

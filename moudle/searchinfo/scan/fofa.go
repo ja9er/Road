@@ -79,8 +79,13 @@ func Fafaall(fofaquery string) (urls []string) {
 				if strings.Contains(value[1], "http") {
 					urls = append(urls, value[1])
 				} else {
-					urls = append(urls, "https://"+value[1])
+					if strings.Contains(value[4], "https") {
+						urls = append(urls, value[4]+"://"+value[1])
+					} else {
+						urls = append(urls, "http://"+value[1])
+					}
 				}
+
 			}
 		}
 	}

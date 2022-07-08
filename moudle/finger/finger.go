@@ -107,7 +107,7 @@ func toUtf8(content string, contentType string) string {
 		}
 	}
 
-	reg = regexp.MustCompile(`(?is)<title[^>]*>(.*?)<\/title>`)
+	reg = regexp.MustCompile(`(?is)<[tT][iI][tT][lL][eE][^>]*>(.*?)<\/[tT][iI][tT][lL][eE]>`)
 	match = reg.FindStringSubmatch(content)
 	if len(match) > 1 {
 		aa := match[1]
