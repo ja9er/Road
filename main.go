@@ -29,7 +29,7 @@ func main() {
 	//	resp.Writer.Write(content)
 	//	resp.Writer.Flush()
 	//})
-	v1 := r.Group("/")
+	v1 := r.Group("/", view.CheckAuth)
 	view.Loadlogin(r)
 	view.Loadidnex(r, v1)
 	view.Loadtask(r, v1)
