@@ -34,7 +34,6 @@ var (
 
 func TaskInit(path string) {
 	dir_list, err := ioutil.ReadDir(path)
-
 	if err != nil {
 		log.Println(err)
 		return
@@ -52,24 +51,28 @@ func TaskInit(path string) {
 	//fmt.Println(comm.Attackplugins)
 }
 
+type Pocname string
+
 type Attackplugin interface {
 	Attack(target string, filepath string) bool
 }
 
+func Regist(target string, plugin Attackplugin, info PluginInfo) {
+	Attackplugins[target] = append(Attackplugins[target], plugin)
+	Pluginfos = append(Pluginfos, info)
+}
+
 type PluginInfo struct {
+	Banner      string
 	Name        string
 	Description string
 	Query       string
 }
 
 var Attackplugins = make(map[string][]Attackplugin)
-
-func Regist(target string, plugin Attackplugin) {
-	Attackplugins[target] = append(Attackplugins[target], plugin)
-}
+var Pluginfos []PluginInfo
 
 func Attackmatch(target string, banner string) bool {
-
 	flag := false
 	for name, list := range Attackplugins {
 		if strings.Contains(name, banner) {

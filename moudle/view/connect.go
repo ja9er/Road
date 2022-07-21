@@ -4,6 +4,7 @@ import (
 	"Road/moudle/sqlmoudle"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -67,7 +68,23 @@ func deleteequipment(resp *gin.Context) {
 	resp.JSONP(http.StatusOK, flag)
 }
 
+func Handleconnectequipment(ctx *gin.Context) {
+	wsConn, _ := Upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	lastlength := len(sqlmoudle.Queryconnectinfo())
+	for {
+		templength := len(sqlmoudle.Queryconnectinfo())
+		if templength-lastlength > 0 {
+			wsConn.WriteMessage(websocket.TextMessage, []byte("true"))
+		} else {
+			wsConn.WriteMessage(websocket.TextMessage, []byte("false"))
+		}
+		lastlength = templength
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func Loadconnect(e *gin.Engine, v1 *gin.RouterGroup) {
+	v1.Any("/admin/connect/websocket", Handleconnectequipment)
 	v1.GET("/admin/connect", getconnect)
 	v1.GET("/admin/connect/info", getconnectinfo)
 	v1.GET("/admin/connect/task/info", getconnect_taskinfo)

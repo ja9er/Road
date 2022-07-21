@@ -3,7 +3,6 @@ package main
 import (
 	"Road/moudle/common"
 	"crypto/tls"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -38,8 +37,13 @@ type DrayTek_Vigor_cgibin_command_injection struct {
 }
 
 func init() {
-	fmt.Println("DrayTek_Vigor_cgibin_mainfunctioncgi_command_injection init success")
-	common.Regist("Vigor Router", &DrayTek_Vigor_cgibin_command_injection{})
+	info := common.PluginInfo{
+		Banner:      "Vigor Router",
+		Name:        "DrayTek Vigor cgibin command injection",
+		Description: "a command injection poc about DrayTek Vigor",
+		Query:       "title=\"Vigor 300B\"||title=\"Vigor 2960\"||title=\"Vigor 3900\"",
+	}
+	common.Regist(info.Banner, &DrayTek_Vigor_cgibin_command_injection{}, info)
 }
 
 func (draytek *DrayTek_Vigor_cgibin_command_injection) Attack(target string, filepath string) bool {

@@ -12,10 +12,10 @@ import (
 //数据库配置
 const (
 	UserName = "root"
-	Password = "root"
-	Ip       = "10.10.10.166"
+	Password = "Docker@mysql123"
+	Ip       = "139.155.75.156"
 	Port     = "3306"
-	DbName   = "road"
+	DbName   = "banner"
 )
 
 //const (

@@ -34,5 +34,6 @@ func main() {
 	view.Loadidnex(r, v1)
 	view.Loadtask(r, v1)
 	view.Loadconnect(r, v1)
+	view.Loadshowpoc(r, v1)
 	r.Run(":80")
 }
