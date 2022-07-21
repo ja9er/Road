@@ -12,19 +12,11 @@ import (
 //数据库配置
 const (
 	UserName = "root"
-	Password = "Docker@mysql123"
-	Ip       = "139.155.75.156"
+	Password = ""
+	Ip       = ""
 	Port     = "3306"
 	DbName   = "banner"
 )
-
-//const (
-//	UserName = "root"
-//	Password = "Docker@mysql123"
-//	Ip       = "139.155.75.156"
-//	Port     = "3306"
-//	DbName   = "banner"
-//)
 
 //Db数据库连接池
 var DB *sql.DB
