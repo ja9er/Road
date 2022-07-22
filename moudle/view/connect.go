@@ -72,11 +72,12 @@ func Handleconnectequipment(ctx *gin.Context) {
 	wsConn, _ := Upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	lastlength := len(sqlmoudle.Queryconnectinfo())
 	for {
-		templength := len(sqlmoudle.Queryconnectinfo())
+		temp := sqlmoudle.Queryconnectinfo()
+		templength := len(temp)
 		if templength-lastlength > 0 {
-			wsConn.WriteMessage(websocket.TextMessage, []byte("true"))
+			wsConn.WriteMessage(websocket.TextMessage, []byte("{\"result\":\"true\",\"IP\":\""+temp[templength-1].Ip_addr+"\"}"))
 		} else {
-			wsConn.WriteMessage(websocket.TextMessage, []byte("false"))
+			wsConn.WriteMessage(websocket.TextMessage, []byte("{\"result\":\"false\",\"IP\":\"\"}"))
 		}
 		lastlength = templength
 		time.Sleep(5 * time.Second)
